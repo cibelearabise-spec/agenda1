@@ -241,6 +241,7 @@ const DC={1:'#ff7eb6',2:'#7a5238',3:'#6b7280',4:'#5bb5ff',5:'#e53935',6:'#2c4a9a
 const demo=()=>demo0().map(e=>({...e,color:DC[e.id]}));
 let S={ev:demo(),name:'Alex',wk:0,nid:100,theme:'blue'};
 try{const r=localStorage.getItem('agenda-glass');if(r)S=JSON.parse(r)}catch(e){}
+S.theme=S.theme||'blue';
 const save=()=>{try{localStorage.setItem('agenda-glass',JSON.stringify(S))}catch(e){}};
 const pad=n=>String(n).padStart(2,'0'),iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -360,7 +361,7 @@ $('#simp').onclick=()=>$('#sfile').click();
 $('#sfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.ev))throw 0;S={ev:d.ev,name:d.name||'Alex',wk:d.wk||0,nid:d.nid||1000,theme:d.theme||'blue'};save();render();toast('Backup importado')}catch(x){toast('Arquivo inválido')}};r.readAsText(f)};
 $('#mtype').onchange=()=>{mcolor=TYPES[$('#mtype').value][1];swatches()};
 $('#msw').onclick=e=>{const b=e.target.closest('[data-c]');if(b){mcolor=b.dataset.c;swatches()}};
-$('#thm').onclick=()=>{S.theme=S.theme==='black'?'blue':'black';save();theme(S.theme)};
+$('#thm').onclick=()=>{S.theme=(S.theme||'blue')==='black'?'blue':'black';save();theme(S.theme)};
 render();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){try{navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}}
 </script>
