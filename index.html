@@ -134,6 +134,7 @@ html[data-theme=black] nav .logo{text-shadow:0 0 16px #e879f9}
 <button data-v="events" title="Eventos">☰<small>Eventos</small></button>
 <button data-v="team" title="Equipe">☻<small>Equipe</small></button>
 <div class="sp"></div>
+<button id="thm2" title="Trocar tema">◐<small>Tema</small></button>
 <button data-v="set" title="Configurações">⚙<small>Ajustes</small></button>
 </nav>
 <main>
@@ -177,7 +178,7 @@ html[data-theme=black] nav .logo{text-shadow:0 0 16px #e879f9}
 </section>
 
 <section class="view" id="v-team">
-<div style="grid-column:1/-1"><div class="bar"><h2>Equipe</h2></div><div class="mgrid" id="mgrid"></div></div>
+<div style="grid-column:1/-1"><div class="bar"><h2>Equipe</h2><button class="pri" id="addMem">+ Novo membro</button></div><div class="mgrid" id="mgrid"></div></div>
 </section>
 
 <section class="view" id="v-set">
@@ -185,11 +186,13 @@ html[data-theme=black] nav .logo{text-shadow:0 0 16px #e879f9}
 <h2 style="margin:0">Configurações</h2>
 <label class="f">Seu nome<input id="sname"></label>
 <label class="f">Semana começa em<select id="swk"><option value="0">Domingo</option><option value="1">Segunda</option></select></label>
+<button class="ib" id="thm3">◐ Trocar tema (Azul / Preto glamour)</button>
 <button class="pri" id="ssave">Salvar</button>
 <div class="f2"><button class="ib" id="sexp">⬇ Exportar backup</button><button class="ib" id="simp">⬆ Importar backup</button></div>
 <input type="file" id="sfile" accept="application/json" hidden>
 <button class="ib" id="sdemo">Restaurar eventos de exemplo</button>
 <button class="dng" id="sclear">Apagar todos os eventos</button>
+<small style="color:var(--mut)">Agenda Glass · versão 5</small>
 </div>
 </section>
 </main>
@@ -209,6 +212,12 @@ html[data-theme=black] nav .logo{text-shadow:0 0 16px #e879f9}
 <div class="f">Participantes<div class="mems" id="mmem"></div></div>
 <div class="row"><button class="dng" id="mdel" style="display:none">Excluir</button><span></span><button class="pri" id="msave">Salvar</button></div>
 </div></div>
+<div class="ov" id="ov2"><div class="modal glass" role="dialog" aria-modal="true">
+<div class="row"><h3 id="nh">Novo membro</h3><button class="ib" id="cl2" aria-label="Fechar">✕</button></div>
+<label class="f">Nome<input id="nname" maxlength="20" placeholder="Ex.: Camila"></label>
+<div class="f">Cor do avatar<div class="sw" id="nsw"></div></div>
+<div class="row"><button class="dng" id="ndel" style="display:none">Excluir</button><span></span><button class="pri" id="nsave">Salvar</button></div>
+</div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -220,7 +229,7 @@ function col(e){return e.color||TYPES[e.type][1]}
 function txt(h){const n=parseInt(h.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000>150?'#1d1d1f':'#fff'}
 function swatches(){$('#msw').innerHTML=PAL.map(([n,h])=>`<button type="button" title="${n}" aria-label="${n}" data-c="${h}" style="--c:${h}" class="${h===mcolor?'on':''}"></button>`).join('')}
 function theme(t){document.documentElement.dataset.theme=t;const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='black'?'#0c0613':'#1e3a8a';$('#thm').textContent=t==='black'?'🌙 Azul':'💎 Preto'}
-const MEMBERS=[{id:1,n:'Alex',c:'#3b82f6'},{id:2,n:'Ivan M',c:'#a855f7'},{id:3,n:'Anita K',c:'#ec4899'},{id:4,n:'Maria S',c:'#14b8a6'},{id:5,n:'Leo P',c:'#f59e0b'}];
+const DEFM=[{id:1,n:'Alex',c:'#3b82f6'},{id:2,n:'Ivan M',c:'#a855f7'},{id:3,n:'Anita K',c:'#ec4899'},{id:4,n:'Maria S',c:'#14b8a6'},{id:5,n:'Leo P',c:'#f59e0b'}];
 const MES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const demo0=()=>[
@@ -239,9 +248,9 @@ const demo0=()=>[
 {id:13,title:'Corrida',date:'2025-09-10',type:'pers',start:'06:30',end:'07:30',note:'',m:[1]}];
 const DC={1:'#ff7eb6',2:'#7a5238',3:'#6b7280',4:'#5bb5ff',5:'#e53935',6:'#2c4a9a',7:'#8fae8b',8:'#c8684a',9:'#d98ca3',10:'#e0a526',11:'#8e2a45',12:'#a58bff',13:'#5fd3a6'};
 const demo=()=>demo0().map(e=>({...e,color:DC[e.id]}));
-let S={ev:demo(),name:'Alex',wk:0,nid:100,theme:'blue'};
+let S={ev:demo(),name:'Alex',wk:0,nid:100,theme:'blue',members:DEFM.map(m=>({...m})),mid:100};
 try{const r=localStorage.getItem('agenda-glass');if(r)S=JSON.parse(r)}catch(e){}
-S.theme=S.theme||'blue';
+S.theme=S.theme||'blue';S.members=S.members||DEFM.map(m=>({...m}));S.mid=S.mid||100;
 const save=()=>{try{localStorage.setItem('agenda-glass',JSON.stringify(S))}catch(e){}};
 const pad=n=>String(n).padStart(2,'0'),iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -249,7 +258,7 @@ const TODAY=iso(new Date());
 let vy=2025,vm=8,sel='2025-09-08',filter='all',editId=null;
 const byDay=d=>S.ev.filter(e=>e.date===d).sort((a,b)=>a.start.localeCompare(b.start));
 const fmt=d=>{const[y,m,dd]=d.split('-');return `${+dd} de ${MES[m-1]} de ${y}`};
-const avs=ids=>ids.map(i=>{const m=MEMBERS.find(x=>x.id===i);return m?`<span class="av" style="background:${m.c}" title="${m.n}">${m.n[0]}</span>`:''}).join('');
+const avs=ids=>ids.map(i=>{const m=S.members.find(x=>x.id===i);return m?`<span class="av" style="background:${m.c};color:${txt(m.c)}" title="${esc(m.n)}">${esc(m.n[0].toUpperCase())}</span>`:''}).join('');
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',1800)}
 
 function calendar(){
@@ -288,7 +297,7 @@ function events(){
  $('#evList').innerHTML=l.length?l.map(li).join(''):'<div class="empty">Nenhum evento aqui.</div>';
 }
 function team(){
- $('#mgrid').innerHTML=MEMBERS.map(m=>{const n=S.ev.filter(e=>e.m.includes(m.id)).length;return `<div class="glass mem"><span class="av" style="background:${m.c}">${m.n[0]}</span><div><b>${m.n}</b><br><small style="color:var(--mut)">${n} evento${n===1?'':'s'}</small></div></div>`}).join('');
+ $('#mgrid').innerHTML=S.members.length?S.members.map(m=>{const n=S.ev.filter(e=>e.m.includes(m.id)).length;return `<div class="glass mem" data-id="${m.id}" style="cursor:pointer"><span class="av" style="background:${m.c};color:${txt(m.c)}">${esc(m.n[0].toUpperCase())}</span><div style="flex:1"><b>${esc(m.n)}</b><br><small style="color:var(--mut)">${n} evento${n===1?'':'s'}</small></div><span style="color:var(--mut)">✎</span></div>`}).join(''):'<div class="empty" style="grid-column:1/-1">Nenhum membro ainda. Toque em “+ Novo membro”.</div>';
 }
 function notif(){
  const up=S.ev.filter(e=>e.date>=TODAY).sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)).slice(0,5);
@@ -309,13 +318,13 @@ function open_(id,date){
  $('#mh').textContent=e?'Detalhes do evento':'Novo evento';
  $('#mtitle').value=e?e.title:'';$('#mdate').value=e?e.date:(date||sel);
  $('#mtype').value=e?e.type:'imp';$('#ms').value=e?e.start:'09:00';$('#me').value=e?e.end:'10:00';$('#mnote').value=e?e.note:'';
- $('#mmem').innerHTML=MEMBERS.map(m=>`<label><input type="checkbox" value="${m.id}" ${(e?e.m:[1]).includes(m.id)?'checked':''}>${m.n}</label>`).join('');
+ $('#mmem').innerHTML=S.members.length?S.members.map(m=>`<label><input type="checkbox" value="${m.id}" ${(e?e.m:[S.members[0].id]).includes(m.id)?'checked':''}>${esc(m.n)}</label>`).join(''):'<small>Adicione membros na aba Equipe.</small>';
  $('#mdel').style.display=e?'':'none';mcolor=e?col(e):TYPES[$('#mtype').value][1];swatches();
  $('#ov').classList.add('show');
 }
 const close=()=>$('#ov').classList.remove('show');
 $('#mx').onclick=close;$('#ov').onclick=e=>{if(e.target.id==='ov')close()};
-document.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Enter'&&e.target.classList.contains('cell'))open_(null,e.target.dataset.d)};
+document.onkeydown=e=>{if(e.key==='Escape'){close();close2()}if(e.key==='Enter'&&e.target.classList.contains('cell'))open_(null,e.target.dataset.d)};
 $('#msave').onclick=()=>{
  const t=$('#mtitle').value.trim(),d=$('#mdate').value,s=$('#ms').value,en=$('#me').value;
  if(!t||!d){toast('Informe título e data');return}
@@ -358,10 +367,28 @@ $('#sdemo').onclick=()=>{S.ev=demo();save();render();toast('Exemplos restaurados
 $('#sclear').onclick=()=>{if(confirm('Apagar todos os eventos?')){S.ev=[];save();render()}};
 $('#sexp').onclick=()=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='agenda-backup.json';a.click();toast('Backup exportado')}catch(e){toast('Exportar não disponível aqui')}};
 $('#simp').onclick=()=>$('#sfile').click();
-$('#sfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.ev))throw 0;S={ev:d.ev,name:d.name||'Alex',wk:d.wk||0,nid:d.nid||1000,theme:d.theme||'blue'};save();render();toast('Backup importado')}catch(x){toast('Arquivo inválido')}};r.readAsText(f)};
+$('#sfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.ev))throw 0;S={ev:d.ev,name:d.name||'Alex',wk:d.wk||0,nid:d.nid||1000,theme:d.theme||'blue',members:Array.isArray(d.members)?d.members:DEFM.map(m=>({...m})),mid:d.mid||1000};save();render();toast('Backup importado')}catch(x){toast('Arquivo inválido')}};r.readAsText(f)};
+let memEdit=null,memColor='#3b82f6';
+function memSw(){$('#nsw').innerHTML=PAL.map(([n,h])=>`<button type="button" title="${n}" aria-label="${n}" data-c="${h}" style="--c:${h}" class="${h===memColor?'on':''}"></button>`).join('')}
+function openMem(id){memEdit=id;const m=id?S.members.find(x=>x.id===id):null;
+ $('#nh').textContent=m?'Editar membro':'Novo membro';$('#nname').value=m?m.n:'';
+ memColor=m?m.c:PAL[Math.floor(Math.random()*PAL.length)][1];memSw();
+ $('#ndel').style.display=m?'':'none';$('#ov2').classList.add('show')}
+function close2(){$('#ov2').classList.remove('show')}
+$('#addMem').onclick=()=>openMem(null);
+$('#mgrid').onclick=e=>{const c=e.target.closest('.mem');if(c)openMem(+c.dataset.id)};
+$('#cl2').onclick=close2;$('#ov2').onclick=e=>{if(e.target.id==='ov2')close2()};
+$('#nsw').onclick=e=>{const b=e.target.closest('[data-c]');if(b){memColor=b.dataset.c;memSw()}};
+$('#nsave').onclick=()=>{const n=$('#nname').value.trim();if(!n){toast('Informe o nome');return}
+ if(memEdit)Object.assign(S.members.find(x=>x.id===memEdit),{n,c:memColor});else S.members.push({id:S.mid++,n,c:memColor});
+ save();render();close2();toast(memEdit?'Membro atualizado':'Membro adicionado')};
+$('#ndel').onclick=()=>{if(!confirm('Remover este membro dos eventos e da equipe?'))return;
+ S.members=S.members.filter(x=>x.id!==memEdit);S.ev.forEach(e=>e.m=e.m.filter(i=>i!==memEdit));
+ save();render();close2();toast('Membro removido')};
 $('#mtype').onchange=()=>{mcolor=TYPES[$('#mtype').value][1];swatches()};
 $('#msw').onclick=e=>{const b=e.target.closest('[data-c]');if(b){mcolor=b.dataset.c;swatches()}};
-$('#thm').onclick=()=>{S.theme=(S.theme||'blue')==='black'?'blue':'black';save();theme(S.theme)};
+const toggleTheme=()=>{S.theme=(S.theme||'blue')==='black'?'blue':'black';save();theme(S.theme)};
+['#thm','#thm2','#thm3'].forEach(i=>$(i).onclick=toggleTheme);
 render();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){try{navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}}
 </script>
